@@ -1,0 +1,1474 @@
+---
+title: "Modele Liniowe"
+author: "Stanisław Cabaj, Mateusz Gęca, Bartosz Justkowski"
+date: "2023-11-06"
+output: html_notebook
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem reszt rekursywnych
+
+## Wstęp
+
+  Rozważmy liniowy model statystyczny:
+
+Modelem liniowym nazywamy taki model statystyczny, w którym obserwacje $y_{1},...,y_{t}$ mają postać $y_{i} = \beta_0 x_{i,0} + \beta_{1} x_{i,1} + \beta_{2} x_{i,2} + ... + \beta_{k-1} x_{i,k-1} + \epsilon_{i}, i = 1,2,...,t$ gdzie $x_{i,j}$ są ustalonymi liczbami, $\epsilon_i$ są "błędami losowymi" , a $\beta_j, j=0,...,k-1$ są nieznanymi stałymi. Powyższy model można zapisać w klasycznej postaci wektorowo macierzowej oznaczanej $\left( Y,X\beta,\sigma^2 I \right)$ symbolizującej model spełniający 3 następujące założenia:
+\[
+Y = X \beta + \epsilon
+\]
+
+\[
+E\left[ \epsilon \right] = 0
+\]
+
+\[
+Var\left( \epsilon \right) = \sigma^2 I
+\]
+
+gdzie:
+
+\[  Y_t = \left[\begin{array}{c}
+    y_1\\
+    \vdots\\
+    y_t
+    \end{array}\right],
+    X = \left[\begin{array}{cccc}
+    x_{1,0}&x_{1,1}&\dots&x_{1,k-1}\\
+    \vdots&\vdots&\ddots&\vdots\\
+    x_{t,0}&x_{t,1}&\dots&x_{t,k-1}
+    \end{array}\right],
+    \epsilon = \left[\begin{array}{c}
+    \epsilon_1\\
+    \vdots\\
+    \epsilon_t
+    \end{array}\right],
+    \beta = \left[\begin{array}{c}
+    \beta_0\\
+    \vdots\\
+    \beta_{k-1}
+    \end{array}\right],
+    \]
+    Gdzie, jeśli w modelu obecne są stałe, $x_{i,0} = 1$ dla każdego $i = 1, ..., t$, 
+    (notacja $^{'}$ przy macierzach i wierszach oznacza transpozycję)
+    Przedstawmy schemat obliczania reszt rekursywnych w modelu liniowym:
+    
+  1. Wybierz pierwsze $t\geq k$ obserwacji i oblicz $\hat{\beta_t} = \left( X_t^{'} X_t \right)^{-1} X_t^{'} Y_t$ gdzie $X_t$ - macierz o wymiarach $t \times k$, gdzie $t$ - ilość obserwacji oraz $k$ - ilość zmiennych oraz $Y_t^{'} = \left( y_1, . . . ,y_t \right)$. Reszty rekursywne są w standaryzowanymi resztami prognozy z wyprzedzeniem jednego kroku:
+    $$w_{t+1} = \frac{\left( y_{t+1} - x_{t+1}^{'} \hat{\beta_t} \right)}{\sqrt{1 + x_{t+1}^{'} \left( X_t^{'} X_t \right)^{-1} x_{t+1}}}$$
+    Przypominamy, że wzór na $\hat{\beta}_t$ był wyprowadzany na drugim wykładzie Modeli Liniowych $:)$
+    
+  2. Dodajemy $(t+1)$-szą obserwację do danych i uzyskujemy 
+    $\hat{\beta}_{t+1} = \left( X_{t+1}^{'} X_{t+1} \right)^{-1} X_{t+1}^{'} Y_{t+1}$, oblicz $w_{t+2}$
+  3. Powtarzamy poprzedni krok, dodając jedną obserwację na raz. W regresji szeregów czasowych przeważnie zaczynamy od $k$ obserwacji i uzyskujemy $T-k$ reszt rekursywnych. Te reszty mogą być obliczone używając formuły. Te reszty mogą być obliczone używając wzoru Bartletta (którego dowód możemy znaleźć w "Uzupełnienia z macierzy" z wykładu)
+  
+  $$\left( A - a^{'} b \right)^{-1} = A^{-1} + A^{-1} a^{'} \left( I - b A^{-1} a^{'} \right)^{-1} b A^{-1}$$
+    
+  z $A = \left( X_t^{'} X_{t} \right)$ i $a = -b = x_{t+1}^{'}$, wtedy:
+    $$\left( X_{t+1}^{'} X_{t+1} \right)^{-1} = \left( X_{t}^{'} X_{t} \right)^{-1} -\frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} x_{t+1}^{'} \left( X_{t}^{'} X_{t} \right)^{-1}}{1 +x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} } $$
+    i tylko $\left( X_{t+1}^{'} X_{t+1} \right)^{-1}$ musi być policzone, ponadto:
+    $$\hat{\beta}_{t+1} = \hat{\beta_t} + \frac{\left( X_{t+1}^{'} X_{t+1} \right)^{-1} x_{t+1} \left( y_{t+1} - x_{t+1}^{'} \hat{\beta_t} \right)}{f_{t+1}}$$
+    gdzie 
+    $$f_{t+1} = 1 + x_{t+1}^{'} \left( X_t^{'} X_t \right)^{-1} x_{t+1}$$
+    
+  Bo:
+    
+   \[ \begin{align*}
+        \hat{\beta}_{t+1} &= \left( X_{t+1}^{'} X_{t+1} \right)^{-1} X_{t+1}^{'} Y_{t+1} \\
+        &=\left[\left( X_{t}^{'} X_{t} \right)^{-1} -\frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} x_{t+1}^{'} \left( X_{t}^{'} X_{t} \right)^{-1}}{1 +x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} } \right] X_{t+1}^{'} Y_{t+1} \\  
+        &=\left( X_{t}^{'} X_{t} \right)^{-1} X_{t+1}^{'} Y_{t+1} -\frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} x_{t+1}^{'} \left( X_{t}^{'} X_{t} \right)^{-1}}{1 +x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} } X_{t+1}^{'} Y_{t+1} \\
+         &= \left( X_t^{'} X_t \right)^{-1} \left( X_t^{'} Y_t + x_{t+1} y_{t+1}\right) - \frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} x_{t+1}^{'} \left( X_{t}^{'} X_{t} \right)^{-1}}{1 +x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} }\left( X_t^{'} Y_t + x_{t+1} y_{t+1}\right) \\
+        &= \hat{\beta}_t + \left( X_t^{'} X_t \right)^{-1} x_{t+1} y_{t+1} - \frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} x_{t+1}^{'}}{f_t} \hat{\beta}_t - \frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} x_{t+1}^{'} \left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} y_{t+1}}{f_t}\\
+        &= \hat{\beta}_t  - \frac{ -\left( X_t^{'} X_t \right)^{-1} x_{t+1} y_{t+1} f_t + \left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1}  \left[ x_{t+1}^{'}\hat{\beta}_t + x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} y_{t+1}\right]}{f_t}\\
+        &= \hat{\beta}_t  - \frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1}  \left[ x_{t+1}^{'}\hat{\beta}_t + x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} y_{t+1} - y_{t+1}\left( 1 +x_{t+1}^{'}\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} \right)\right]}{f_t}\\
+        &= \hat{\beta}_t + \frac{\left( X_{t}^{'} X_{t} \right)^{-1} x_{t+1} \left( y_{t+1} - x_{t+1}^{'} \hat{\beta}_t \right)}{f_t}
+    \end{align*}
+\]
+  
+Zobaczmy porównanie takiego algorytmu z klasycznym algorytmem z którego korzystamy zazwyczaj.
+Na potrzeby eksperymentu wygenerujemy 10 obserwacji z rozkładu jednostajnego na podstawie których stworzymy 10 obserwacji zakłuconych białym szumem. Poniższe rysunki przedstawiają zarówno algorytm tworzenia kolejnych reszt jak również różnice tych reszt.  
+```{r,echo=FALSE, eval=TRUE}
+recursive_resids = function(x,y,t){
+  n = length(x[,1])
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t,]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j,])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j,]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1,]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))/sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i,]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i,]))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  return(residuals_list)
+}
+
+recursive_resids_1 = function(x,y,t){
+  n = length(x)
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))/(sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i])))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  return(residuals_list)
+}
+
+recursive_resids_1_coef = function(x,y,t){
+  n = length(x)
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  return(coefff_mini)
+}
+
+
+
+
+
+```
+    
+```{r,echo=FALSE, eval=TRUE, message=FALSE, warning=FALSE}
+library(shiny)
+library(ggplot2)
+library(flexdashboard)
+```
+    
+```{r,echo=FALSE, eval=TRUE}
+set.seed(1004)
+n = 10
+x = runif(n,0,1)
+y = x +rnorm(n)
+z=seq(0,1,length.out=n)
+data <- data.frame(x, y)
+model = lm(y~x)
+plot(x,y,xlab = "wartości dane",ylab="wartości estymowane",ylim = c(-3,3),xlim=c(0,1.07))
+z1=z*model$coefficients[2] + model$coefficients[1]
+lines(z,z1, type="l",col="black",lwd=3)
+legend_labels <- character(n)
+points(x[1:3],y[1:3],col="blue")
+c=recursive_resids_1_coef(x,y,3)
+z1=z*c[2] + c[1]
+
+lines(z,z1,col="blue")
+points(x[4],y[4],col="blue",pch=19)
+c=recursive_resids_1_coef(x,y,4)
+z1=z*c[2] + c[1]
+
+lines(z,z1,col="yellow")
+points(x[5],y[5],col="yellow",pch=19)
+c=recursive_resids_1_coef(x,y,5)
+z1=z*c[2] + c[1]
+
+lines(z,z1,col="green")
+points(x[6],y[6],col="green",pch=19)
+c=recursive_resids_1_coef(x,y,6)
+z1=z*c[2] + c[1]
+
+lines(z,z1,col="purple")
+points(x[7],y[7],col="purple",pch=19)
+c=recursive_resids_1_coef(x,y,7)
+z1=z*c[2] + c[1]
+lines(z,z1,col="gray")
+points(x[8],y[8],col="gray",pch=19)
+c=recursive_resids_1_coef(x,y,8)
+z1=z*c[2] + c[1]
+
+lines(z,z1,col="red")
+points(x[9],y[9],col="red",pch=19)
+c=recursive_resids_1_coef(x,y,9)
+z1=z*c[2] + c[1]
+lines(z,z1,col="navyblue")
+points(x[10],y[10],col="navyblue",pch=19)
+c=recursive_resids_1_coef(x,y,10)
+legend_labels[1] <- paste(1, "-", col="blue", sep = "")
+legend_labels[2] <- paste(2, "-", col="blue", sep = "")
+legend_labels[3] <- paste(3, "-", col="blue", sep = "")
+legend_labels[4] <- paste(4, "-", col="blue",pch=19, sep = "")
+legend_labels[5] <- paste(5, "-", col="yellow",pch=19, sep = "")
+legend_labels[6] <- paste(6, "-", col="green",pch=19, sep = "")
+legend_labels[7] <- paste(7, "-", col="purple",pch=19, sep = "")
+legend_labels[8] <- paste(8, "-", col="gray",pch=19, sep = "")
+legend_labels[9] <- paste(9, "-", col="red",pch=19, sep = "")
+legend_labels[10] <- paste(10, "-", col="navyblue",pch=19, sep = "")
+legend("topright", legend = c("1-","2-","3-","4-","5-","6-","7-","8-","9-","10-"), col=c("blue","blue","blue","blue","yellow","green","purple","gray","red","navyblue"),pch=c(rep(1,times=3),rep(19,times=7)), title = "Points")
+plot(model$residuals,xlab = "numer indeksu",ylab="wartość residua")
+v = recursive_resids_1(x,y,3)
+points(v[1:3], col="blue")
+points(4,v[4],col="blue",pch=19)
+points(5,v[5],col="yellow",pch=19)
+points(6,v[6],col="green",pch=19)
+points(7,v[7],col="purple",pch=19)
+points(8,v[8],col="gray",pch=19)
+points(9,v[9],col="red",pch=19)
+points(10,v[10],col="navyblue",pch=19)
+
+```
+
+Alternatywnie, można policzyć rezydua przez liczenie $Y_{t+1}$ na $X_{t+1}$ i $d_{t+1}$ gdzie $d_{t+1} = 1$ dla $(t+1)$ - szej obserwacji, zero w przeciwnym wypadku. 
+
+  Estymowany współczynnik $d_{t+1}$ jest licznikiem $w_{t+1}$. Standardowym błędem estymatora jest  $s_{t+1}$ razy mianownik $w_{t+1}$, gdzie $s_{t+1}$ jest standardowym błędem regresji. Wobec tego $w_{t+1}$ może być uzyskany przez $s_{t+1}$ pomnożony przez t-statystykę odpowiadającją $d_{t+1}$. To obliczenie musi być przeprowadzone sekwencyjnie, w każdym przypadku generując odpowiadające rezydua rekursywne. To może być nie wydajne obliczeniowo, ale jest proste do obliczania używając bibliotek związanych z regresją.
+    
+  Jest oczywistym z pierwszego kroku, że jeśli $\epsilon_t \sim IIN\left(0,\sigma^2\right)$ wtedy $w_{t+1}$ ma zerową średnią i $Var(w_{t+1}) = \sigma^2$. Co więcej, $w_{t+1}$ jest liniową kombinacją zmiennych $y_i$, czyli jest zmienną z rozkładu normalnego. 
+    Zostaje do pokazania, że rekursywne rezydua są niezależne. Korzystając z normalności, wystarczy pokazać:
+    $$Cov\left(w_{t+1},w_{s+1}\right) = 0 \ \ \textit{dla} \ \ \ t \neq s; \;t,s = k, . . . T-1$$
+    
+  Zapisując $w_{t+1}$
+    $$w_{t+1} = \frac{\left( y_{t+1} - x_{t+1}^{'} \hat{\beta_t} \right)}{\sqrt{1 + x_{t+1}^{'} \left( X_t^{'} X_t \right)^{-1} x_{t+1}}} = \frac{\left( y_{t+1} - x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} X_{t}^{'} Y_{t} \right)}{\sqrt{1 + x_{t+1}^{'} \left( X_t^{'} X_t \right)^{-1} x_{t+1}}}$$
+    $$=\frac{\left( y_{t+1} - x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j y_j \right)}{\sqrt{1 + x_{t+1}^{'} \left( X_t^{'} X_t \right)^{-1} x_{t+1}}}=
+    \frac{\left( \epsilon_{t+1} - x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j \epsilon_j \right)}{\sqrt{1 + x_{t+1}^{'} \left( X_t^{'} X_t \right)^{-1} x_{t+1}}}$$
+    Łatwo zauważyć, że każdy $w_t$ jako kombinacja liniowa rozkładów normalnych $y_j$ jest łącznym rozkładem normalnym, teraz (rozważając sam licznik):
+  
+\[
+\begin{align*}
+Cov(w_{t+1}, w_{r+1}) &= E\left[ \left( \epsilon_{t+1} - x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j \epsilon_j \right) \left( \epsilon_{r+1} - x_{r+1}^{'} \left( X_r^{'} X_{r} \right)^{-1} \sum_{l=1}^r x_l \epsilon_l \right) \right]\\
+&=0 + E \left[ - \epsilon_{t+1} x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} \epsilon_{t+1} +  x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j \epsilon_j x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_j \epsilon_j \right] \\
+&= \sigma^2 \left( -x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} + x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_j\right) \\
+& \textit{Możemy dokonać transpozycji ostatnich 4 elementów, bo są skalarem} \\
+&= \sigma^2 \left( -x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} + x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j \left(x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_j\right)^{'}\right) \\
+&= \sigma^2 \left( -x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} + x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \sum_{j=1}^t x_j x_{j}^{'}\left( X_r^{'} X_r \right)^{-1} x_{r+1}\right) \\
+&= \sigma^2 \left( -x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} + x_{t+1}^{'} \left( X_t^{'} X_{t} \right)^{-1} \left( X_t^{'} X_{t} \right) \left( X_r^{'} X_r \right)^{-1} x_{r+1}\right)\\
+& \textit{Analogicznie jak wcześniej:}\\
+&= \sigma^2 \left( -x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} + \left( x_{t+1}^{'} \left( X_r^{'} X_r \right)^{-1} x_{r+1}\right)^{'} \right)\\
+&= \sigma^2 \left( -x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} +x_{r+1}^{'}\left( X_r^{'} X_r \right)^{-1} x_{t+1} \right)\\
+&= 0
+\end{align*}
+\]
+
+
+   W powyższej równości korzystamy z tego, że dla $t \neq r, y_t \  i \  y_r$ są niezależne, oraz, że $Var(y_i) = Var(\epsilon_i) = \sigma^2$, b.s.o zakładamy, że $t<r$
+
+
+   Alternatywnie, można wyrazić $T-k$-ty wektor reszt rekursywnych jako $w = Cy$, gdzie $C$ ma wymiary $(T - k) \times T$ jak niżej:
+    
+   \[
+C=\left[\begin{array}{cccccc}
+    -\frac{x_{k+1}^{'} \left( X_k^{'} X_k \right)^{-1} X_k^{'}}{\sqrt{f_{k+1}}} & \frac{1}{\sqrt{f_{k+1}}} &&&& 0....0 \\
+    \vdots && \ddots &&& \\
+    -\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{t-1}^{'}}{\sqrt{f_t}} &&& \frac{1}{\sqrt{f_{t}}} && 0....0 \\
+    \vdots && && \ddots & \\
+    -\frac{x_{T}^{'} \left( X_{T-1}^{'} X_{T-1} \right)^{-1} X_{T-1}^{'}}{\sqrt{f_T}} && &&& \frac{1}{\sqrt{f_T}}
+\end{array}\right]
+\]
+
+  Ponadto, macierz $C$ spełnia:  
+- \(CX = 0\)  
+- \(CC^{'} = I_{T-k}\)  
+- \(C^{'}C = \bar{P}_{X}\)
+
+  $$CC^{'} = I_{T-k}$$
+    \[
+\begin{bmatrix}
+    -\frac{x_{k+1}^{'} \left( X_k^{'} X_k \right)^{-1} X_k^{'}}{\sqrt{f_{k+1}}} & \frac{1}{\sqrt{f_{k+1}}} & 0 & \ldots & 0 \\
+    \vdots & \ddots & & & \\
+    -\frac{x_{T}^{'} \left( X_{T-1}^{'} X_{T-1} \right)^{-1} X_{T-1}^{'}}{\sqrt{f_T}} & & & & \frac{1}{\sqrt{f_T}}
+\end{bmatrix}
+\begin{bmatrix}
+    -\frac{\left(x_{k+1}^{'} \left( X_k^{'} X_k \right)^{-1} X_k^{'}\right)^{'}}{\sqrt{f_{k+1}}} & & -\frac{\left(x_{T}^{'} \left( X_{T-1}^{'} X_{T-1} \right)^{-1} X_{T-1}^{'}\right)^{'}}{\sqrt{f_T}} \\
+    \frac{1}{\sqrt{f_{k+1}}} & & \\
+    & & \\
+    0 & \ldots & \frac{1}{\sqrt{f_T}}
+\end{bmatrix}
+\]
+   Rozważmy elementy z przekątnej, tzn. tam gdzie $i = j$. Dla ustalenia uwagi wybierzmy do rozważań element $t, t\in\{k+1,...,T \}$. Z uwagi na to, że "pierwszy wiersz", ma naprawdę szerokość k, mnożenie będzie przyjmowało następującą postać:
+    
+   $$\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{t-1}^{'}}{\sqrt{f_t}} \frac{\left( x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{t-1}^{'}\right)^{'}}{\sqrt{f_t}} + \frac{1}{f_t} =$$
+
+  $$\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} \left( X_{t-1}^{'} X_{t-1} \right) \left( X_{t-1}^{'} X_{t-1} \right)^{-1} x_{t}}{f_t} + \frac{1}{f_t} =$$
+
+  $$\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} x_{t} + 1}{f_t}= \frac{f_t}{f_t} = 1$$
+
+  Dla $t \neq l, \ \  t,l \in \{ k+1, ... ,T \}$, B.S.O $t > l$
+
+  Zauważmy, że przemnażając przez siebie kolejne elementy macierzy, w pewnym momencie dojdzie do "urwania" większej z mnożonych wartości na 3 części: pierwsza będzie mnożona przez swój odpowiednik w drugiej macierzy $X_{t-1}$, druga (konkretnie jeden wiersz/kolumna) przez element $\frac{1}{\sqrt{f_l}}$, trzecia przez zera.
+
+  $$\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{l-1}^{'}}{\sqrt{f_t}} \frac{\left( x_{l}^{'} \left( X_{l-1}^{'} X_{l-1} \right)^{-1} X_{l-1}^{'}\right)^{'}}{\sqrt{f_l}} - \frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} x_{l-1}^{'}}{\sqrt{f_t f_l}} =$$
+
+  $$\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{l-1}^{'} 
+    X_{l-1}\left( X_{l-1}^{'} X_{l-1} \right)^{-1} x_l - x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} x_{l-1}^{'}}{\sqrt{f_t} \sqrt{f_l}} =$$
+
+  $$\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1}  x_l - x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} x_{l-1}^{'}}{\sqrt{f_t} \sqrt{f_l}} = 0$$
+
+  $$CX = 0$$
+  \[
+CX = \left[\begin{array}{cccccc}
+    -\frac{x_{k+1}^{'} \left( X_k^{'} X_k \right)^{-1} X_k^{'}}{\sqrt{f_{k+1}}} & \frac{1}{\sqrt{f_{k+1}}} & & & & 0....0\\
+    \vdots & & \ddots & & & \\
+    -\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{t-1}^{'}}{\sqrt{f_t}} & & & \frac{1}{\sqrt{f_{t}}} & & 0....0\\
+    \vdots & & & & \ddots & \\
+    -\frac{x_{T}^{'} \left( X_{T-1}^{'} X_{T-1} \right)^{-1} X_{T-1}^{'}}{\sqrt{f_T}} & & & & & \frac{1}{\sqrt{f_T}}
+\end{array}\right]
+\left[\begin{array}{c}
+    x_1^{'} \\
+    \vdots \\
+    x_t^{'} \\
+    \vdots \\
+    x_T^{'}
+\end{array}\right]
+\]
+    gdzie
+    $x_i^{'} = [x_{i,0}, ... , x_{i,k-1}], i \in \{ 1, ... T\}$
+    dla uproszczenia rozważmy mnożenie konkretnego wiersza macierzy $C$ (dla wszystkich $k$ kolumn macierzy $X$).
+
+  Zauważmy, że od pewnego elementu przy mnożeniu uzyskamy zera, zapisując więc wynik naszego działania uzyskamy "urwany" kwadrat (zamiast $X_T X_{t-1}$, z kolejną obserwacją $X_t$ przemnożoną przez kolejny element)
+    $$-\frac{x_{t}^{'} \left( X_{t-1}^{'} X_{t-1} \right)^{-1} X_{t-1}^{'} X_{t-1}}{\sqrt{f_t}} + \frac{x_t^{'}}{\sqrt{f_t}} = \frac{- x_t^{'} + x_t^{'}}{\sqrt{f_t}} = \textbf{0}$$
+
+  Widzimy więc, powtarzając powyższą operacje dla każdego t, że otrzymujemy $CX = 0$
+
+  $$C^{'}C = \bar{P}_{X}$$
+    \[
+\begin{bmatrix}
+    -\frac{\left(x_{k+1}^{'} \left( X_k^{'} X_k \right)^{-1} X_k^{'}\right)^{'}}{\sqrt{f_{k+1}}} & & -\frac{\left(x_{T}^{'} \left( X_{T-1}^{'} X_{T-1} \right)^{-1} X_{T-1}^{'}\right)^{'}}{\sqrt{f_T}} \\
+    \frac{1}{\sqrt{f_{k+1}}} & & \\
+    & & \\
+    0 & \ldots & 0 \\
+    & & \frac{1}{\sqrt{f_T}}
+\end{bmatrix}
+\begin{bmatrix}
+    -\frac{x_{k+1}^{'} \left( X_k^{'} X_k \right)^{-1} X_k^{'}}{\sqrt{f_{k+1}}} & \frac{1}{\sqrt{f_{k+1}}} & 0 & \ldots & 0 \\
+    \vdots & & \\
+    -\frac{x_{T}^{'} \left( X_{T-1}^{'} X_{T-1} \right)^{-1} X_{T-1}^{'}}{\sqrt{f_T}} & & \frac{1}{\sqrt{f_T}}
+\end{bmatrix}
+\]
+
+    
+  To oznacza, że reszty rekursywne $w$ są liniowe w $y$, z średnią zero i mają macierz wariancji/kowariancji $Var(w) = C E(\epsilon \epsilon^{'}) C^{'} = \sigma^2 I_{T-k}$. Trzecia własność, również oznacza, że $w^{'}w = y^{'}C^{'}Cy = y^{'}\bar{P}_X y = \epsilon^{'} \epsilon$. To oznacza, że suma kwadratów $(T-k)$ reszt rekursywnych jest równa sumie kwadratów $T$ reszt wyznaczonych przez MNK. 
+    Można również pokazać, że:
+    $$RSS_{t+1} = RSS_{t} + w_{t+1}^2 \ \ \textit{dla} \ \ t = k,...,T-1$$
+    gdzie $RRS_t = \left( Y_t - X_t \hat{\beta}_t \right)^{'} \left( Y_t - X_t \hat{\beta}_t \right)$. 
+    Zauważmy, że dla $t = k: RSS = 0$, ponieważ z k obserwacjami mamy idealne dopasowanie i brak reszt, więc:
+    $$RSS_T = \sum_{t=k+1}^T w_t^2 = \sum_{t=1}^T \epsilon_t^2$$
+
+
+## Zastosowanie reszt rekursywnych
+Reszty rekursywny mają wiele zastosowań, szczególnie w analizie szeregów czasowych, krótko omówimy te najważniejsze według nas.
+
+### Test Harveya-Colliera
+Test Harveya-Colliera służy sprawdzeniu adekwatności stosowania modelu liniowego, czyli zweryfikowaniu hipotezy o liniowej zależności między zmiennymi objaśniającymi a zmienną objaśnianą.
+Kluczowa do konstruowania testu jest własność normalności reszt rezydualnych, a dokładniej fakt, że 
+$$w = (w_{k+1},\dots, w_T)\; \sim \;\mathcal{N}(0,\, 
+\sigma^2 I_{T-k})$$
+Wprowadźmy oznaczenia:
+
+  $\bar{w} := \frac{\sum_{t=k+1}^T w_t}{T-k}$ - wartość średnia
+  $s_w^2 := \frac{\sum_{t=k+1}^T (w_t-\bar{w})^2}{T-k-1}$ - wariancja z próbki
+
+```{r,echo=FALSE, eval=TRUE}
+H_C_test = function (x, y, t) {
+  n = length(x[,1])
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t,]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j,])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j,]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1,]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))/sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i,]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i,]))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  t_1 = t+1
+  k=length(x)
+  w_overline = residuals_list[t_1:n]
+  w_lined = sum(w_overline/(n-t_1))
+  squer_diff = (w_overline - w_lined)^2
+  s_squared = sum(squer_diff/(n-t-1))  
+  stat = w_lined/(sqrt(s_squared)/sqrt(n-t))
+  p_val = 2*(1-pt(abs(stat),n-t-1))
+  return(p_val)
+}
+
+H_C_test_1 = function (x, y, t) {
+ n = length(x)
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))/(sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i])))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  t_1 = t+1
+  k=length(x)
+  w_overline = residuals_list[t_1:n]
+  w_lined = sum(w_overline/(n-t))
+  squer_diff = (w_overline - w_lined)^2
+  s_squared = sum(squer_diff/(n-t-1))  
+  stat = (w_lined/(sqrt(s_squared)))*sqrt(n-t)
+  p_val = 2*(1-pt(abs(stat),n-t-1))
+  war = list(p_wart = p_val,srednia=w_lined,wariancja = s_squared)
+  return(war)
+}
+```
+
+
+Wtedy rozpatrujemy następującą statystykę testową:
+\[
+  \frac{\bar{w}}{s_w}\sqrt{T-k}\; \sim \;t_{T-k-1}
+\]
+W przypadku do czynienia z modelem liniowym, wartość bezwzględna z średniej powinna być mała, bliska zeru. Natomiast gdyby prawdziwa zależność była wypukła, reszty rezydualne miałyby tendencję do dodatniości, co powodowałoby stosunkowo dużą wartość średnią oraz dużą wartość statystyki testowej.
+
+Hipoteza zerowa mówiąca o liniowej zależności między zmiennymi
+objaśniającymi a zmienną objaśnianą jest odrzucana, jeśli wartość statystyki testowej jest mniejsza od kwantylu rzędu $\alpha/2$ z rozkładu $t_{T-k-1}$ lub większa od kwantylu rzędu $1-\alpha/2$ z rozkładu $t_{T-k-1}$, gdzie $\alpha$ - poziom istotności testu.
+
+Zaleca się stosowanie tego testu dla tylko jednej zmiennej objaśniającej. Wynika to z faktu, że błędy w specyfikacji modelu mogą się wzajemnie redukować, jeśli reszty rekursywne są wyliczane na podstawie wielu zmiennych objaśniających.
+Sprawdźmy na przykładzie jak działa ta statystyka. Tak jak poprzednio generujemy próbe z rozkładu normalnego i ponowanie zakłucamy ją białym szumem.
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 500),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 5),
+    plotOutput("el"),
+    textOutput("result"),
+    textOutput("resu"),
+    textOutput("res")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+  y <- x + rnorm(1000)
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+  macierz = data.frame(x1,y1)
+  macierz = macierz[order(macierz$x1),]
+      x1 = c(macierz$x1)
+      y1 = c(macierz$y1)
+      x2 = x1[1:input$value2]
+      y2 = y1[1:input$value2]
+      p_value <- H_C_test_1(x1, y1, input$value2)
+      output$result <- renderText({
+        paste("Wartość p-testu:", p_value$p_wart)
+      })
+      output$resu <- renderText({
+        paste("Średnia:", p_value$srednia)
+      })
+      output$res <- renderText({
+        paste("Wariancja:", p_value$wariancja)
+      })
+      output$el <- renderPlot({
+        plot(x1,y1)
+        points(x1,y1,col="red")
+        points(x2,y2,col="blue")
+      }) 
+    })  
+} , options = list(height = 700)
+)
+```
+Jak widać wskazuje ona na liniowaść.Zobaczmy jak działa na danych nieliniowych i czy rzeczywiście poprawnie odrzuca takie przypadki. Przetestujemy to dla funkcji kwadratowej zakłócnej białym szumem.
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 500),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 5),
+    plotOutput("el"),
+    textOutput("result"),
+    textOutput("resu"),
+    textOutput("res")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+  y <- x^2 + rnorm(1000)
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+  macierz = data.frame(x1,y1)
+  macierz = macierz[order(macierz$x1),]
+      x1 = c(macierz$x1)
+      y1 = c(macierz$y1)
+      x2 = x1[1:input$value2]
+      y2 = y1[1:input$value2]
+      p_value <- H_C_test_1(x1, y1, input$value2)
+      output$result <- renderText({
+        paste("Wartość p-testu:", p_value$p_wart)
+      })
+      output$resu <- renderText({
+        paste("Średnia:", p_value$srednia)
+      })
+      output$res <- renderText({
+        paste("Wariancja:", p_value$wariancja)
+      })
+      output$el <- renderPlot({
+        plot(x1,y1)
+        points(x1,y1,col="red")
+        points(x2,y2,col="blue")
+      })
+    })
+} ,options = list(height = 700)
+)
+```
+
+Na koniec przeststujmy go na danych rzeczywistych. Skorzystamy z danych mtcars oraz sprawdzimy czy istniejąca zależność pomiędzy długością samochodu, a jego spalniem jest liniowa
+
+```{r,echo=FALSE, eval=TRUE}
+plot(mtcars$mpg~mtcars$wt,xlab="Długość auta",ylab="Spalanie")
+p_wart = c()
+newframe = data.frame(mtcars$mpg,mtcars$wt)
+newframe = newframe[order(newframe$mtcars.wt),]
+colnames(newframe) = c("mpg","wt")
+for (i in 1:length(mtcars$mpg)){
+  if(i >= 2){
+  value = H_C_test_1(newframe$wt,newframe$mpg,i)
+  p_wart[i] = value$p_wart
+  }
+  else {
+    p_wart[i] = 0
+  }
+}
+cr = 0:32
+plot(p_wart,type="l",xlab="wartość k",ylab="p_wartość")
+lines(cr,rep(0.05,times=33),col = "red")
+```
+
+
+Adekwatność modelu można również weryfikować korzystając z testu znaku (\textit{Sign test}), który polega na podliczaniu dodatnich wartości reszt rekursywnych. Zakładając hipotezę zerową łatwo można wywnioskować, że wartość oczekiwana takiego podliczenia to $(T-k)/2$. Można też wyznaczyć obszar krytyczny opierając się na własnościach rozkładu dwumianowego.
+
+Twierdzi się, że moc tego testu jest mniejsza od testu Harveya-Colliera, lecz test znaku ma bardzo prostą interpretację i może lepiej znosić zaburzenie normalności reszt.
+
+### Testy Browna-Durbina-Evansa
+Testy Browna-Durbina-Evansa mogą posłużyć do sprawdzenia stabilności współczynników regresji w czasie, czyli też sprawdzeniu występowania zmian strukturalnych modelu liniowego. Hipoteza zerowa jest następująca:
+\begin{displaymath}
+    H_0: \left\{ \begin{array}{l}
+          \beta_1 = \beta_2 = \dots = \beta_T \\ 
+        \sigma^2_1 = \sigma^2_2 = \dots = \sigma^2_T          
+    \end{array}
+    \right.
+\end{displaymath}
+gdzie $\beta_t$ jest wektorem współczynników w czasie $t$, natomiast $\sigma^2_t$ jest wariancją reszt w czasie $t$. Pierwszy test jest znany jako CUSUM test, który opiera się na poniższej statystyce:
+\[
+    W_r = \frac{\sum_{t=k+1}^r w_t}{s_w}, \quad r = k+1, \dots, T
+\]
+gdzie $w_t$ oraz $s_w^2$ są takie jak w teście Harveya-Colliera. Znając własności reszt rekursywnych $w_t$ oraz przyjmując hipotezę zerową, łatwo można wywnioskować, że $E (W_r) = 0$. W przypadku wystąpienia zmian strukturalnych reszty rekursywne mogą mieć trend, w związku z czym $W_r$ może być znacząco różne od $0$. Hipoteza zerowa jest odrzucana, jeśli któraś statystyka $W_r$ wykracza poza obszar ograniczony z góry przez prostą przechodzącą przez punkty $\left(k, a\sqrt{T-k}\right)$ oraz $(T, 3a\sqrt{T-k})$ i z dołu przez prostą przechodzącą przez punkty $\left(k, -a\sqrt{T-k}\right)$ oraz $(T, -3a\sqrt{T-k})$, gdzie $a$ zależy od ustalonego poziomu istotności $\alpha$.
+
+Można przedstawić powód, dla którego rozpatrywany jest tak specyficzny sposób podejmowania decyzji. Rozpatrzmy następujące własności statystyki CUSUM:
+\[
+    E(W_r) = 0, \quad Var(W_r) = r-k, \quad Cov(W_r, W_s) = min(r,s) - k
+\]
+Są one bardzo podobne do własności procesu Wienera startującego w $k$, ozn. $\{Z_t, \; k \leq t \leq T\}$. Trzeba tylko indeksy statystki testowej utożsamić z chwilami czasowymi dla przypadku ciągłego. Odchylenie standardowe z $Z_t$ wynosi $\sqrt{t-k}$, więc autorzy testu sugerują wybranie krzywych ograniczających postaci $\pm \lambda \sqrt{t-k}$, gdzie $\lambda$ jest stałą. Proponowane jest również ograniczenie się do krzywych będących prostymi, które są styczne do $\pm \lambda \sqrt{t-k}$ w punkcie środkowym między $k$ i $T$. Prowadzi to do rozważania prostych przechodzących przez punkty  $\{k, \; \pm a \sqrt{T-k}\}, \{T, \; \pm 3 a \sqrt{T-k}\}$. Dla każdej takiej pary prostych prawdopodobieństwo wyjścia przez punkt $(r, W_r)$ poza ograniczające pole jest największe dla punktu środkowego między $k$ i $T$. Chcemy znaleźć takie proste z rozważanej rodziny, dla których prawdopodobieństwo przekroczenia przez ścieżkę $\{Z_t\}$ każdej z prostych wynosi $\alpha/2$, gdzie $\alpha$ jest poziomem istotności. Aby wyznaczyć odpowiedni dla poziomu istotności parametr $a$ trzeba skorzystać z faktu przedstawionego w "Boundary-Crossing Probabilities for the Brownian Motion and Poisson Processes and Techniques for Computing the Power of the Kolmogorov-Smirnov Test" J. Durbina (1971). Ten fakt głosi, że prawdopodobieństwo wykroczenia przez ścieżkę $\{Z_t\}$ poza prostą $y = d + c(t-k)$ dla $t \in [k, T]$ wynosi:
+\begin{equation} \label{brown}
+    \mathcal{N}\left(\frac{-d-c(T-k)}{\sqrt{T-k}}\right) + exp(-2dc)\; \mathcal{N}\left(\frac{-d+c(T-k)}{\sqrt{T-k}}\right),
+\end{equation}
+gdzie $\mathcal{N}(x)$ jest dystrybuantą standardowego rozkładu normalnego.\\
+Wstawiając $d=a\sqrt{T-k}$ i $c = \frac{2a}{\sqrt{T-k}}$ prosta y przyjmuje postać:\\ $y = a\sqrt{T-k} + 2a \frac{t-k}{\sqrt{T-k}}, \quad$ jest to prosta zgodna z naszymi rozważaniami. Dalej wstawiając te parametry do wyrażenia i pamiętając o prawdopodobieństwie przekroczenia poza linię - $\alpha/2$ otrzymujemy:
+\begin{align*}
+    \frac{\alpha}{2} & = \mathcal{N}\left(\frac{-a\sqrt{T-k}-\frac{2a}{\sqrt{T-k}}(T-k)}{\sqrt{T-k}}\right) + exp\left(-2a\sqrt{T-k}\frac{2a}{\sqrt{T-k}}\right) \, \mathcal{N}\left(\frac{-a\sqrt{T-k}+\frac{2a}{\sqrt{T-k}}(T-k)}{\sqrt{T-k}}\right)\\
+    & = \mathcal{N}(-3a) + exp(4a^2)\, \mathcal{N}(a)
+\end{align*}
+Równanie $\alpha/2 = \mathcal{N}(-3a) + exp(4a^2)\, \mathcal{N}(a)$ należy rozwiązać numerycznie dla parametru $a$. Zakłada się, że prawdopodobieństwo przekroczenia obu prostych ograniczających jest pomijalne, co nie jest mocnym założeniem dla małych wartości $\alpha$ (według autorów jest to rozsądne dla $\alpha \leq 0,1$).
+
+Sprawdźmy przykład najpierw na danych zakłóconych białym szumem
+
+```{r,echo=FALSE, eval=TRUE}
+B_D_E_test = function (x, y, t){
+  n = length(x[,1])
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t,]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  residuals_list = c()
+  res = c()
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j,])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j,]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1,]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))/sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i,]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i,]))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  t_1 = t+1
+  k=length(x)
+  w_overline = residuals_list[t_1:n]
+  w_lined = sum(w_overline/(n-t-1))
+  squer_diff = (w_overline - w_lined)^2
+  s_w = sqrt(sum(squer_diff)/(n-t-1))
+  list_or_R = c()
+  for (i1 in 1:n-t){
+    summmm = 0
+    for(i2 in 1:i1){
+    summmm = w_overline[i2] + summmm
+    }
+    list_or_R[i1] = summmm/s_w
+  }
+  return(list_or_R)
+}
+
+B_D_E_test_1 = function (x, y, t){
+  n = length(x)
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  residuals_list = c()
+  res = c()
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))/sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i]))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  t_1 = t+1
+  w_overline = residuals_list[t_1:n]
+  w_lined = sum(w_overline/(n-t-1))
+  squer_diff = (w_overline - w_lined)^2
+  s_w = sqrt(sum(squer_diff)/(n-t-1))
+  list_or_R = c()
+  for (i1 in 1:n-t){
+    summmm = 0
+    for(i2 in 1:i1){
+      summmm = w_overline[i2] + summmm
+    }
+    list_or_R[i1] = summmm/s_w
+  }
+  return(list_or_R)
+}
+
+
+alfa_counter = function(alfa) {
+  tru_alfa = alfa/2
+  x=0
+  y=10
+  res = 10
+  difffer = res-tru_alfa
+  while (abs(difffer) > 0.000000001){
+    z = x+(y-x)/2
+    x_wyn = (1-pnorm(x*3))+exp(-4*(x)^2)*(1-(1-pnorm(x)))
+    y_wyn = (1-pnorm(y*3))+exp(-4*(y)^2)*(1-(1-pnorm(y)))
+    z_wyn = (1-pnorm(z*3))+exp(-4*(z)^2)*(1-(1-pnorm(z)))
+    x_df = x_wyn - tru_alfa
+    y_df = y_wyn - tru_alfa
+    z_df = z_wyn - tru_alfa
+    res = z_wyn
+    if(x_df * z_df < 0){
+      y = z
+    } else {
+      x=z
+      }
+    difffer = res-tru_alfa
+  }
+  return(z)
+}
+
+plotter = function(x,y,t,alfa){
+  residuas = B_D_E_test_1(x,y,t)
+  bv = alfa_counter(alfa)
+  n = length(y)
+  u1 = bv*sqrt(n-t)
+  a = (2*u1)/(n-t)
+  b = u1 -a*t
+  x_oi = seq(1,n-t, by=1)
+  y_oi = x_oi*a + b
+  y_oi_inv = -y_oi
+  plot(x_oi,residuas,type="l",ylim = c(-50,50))
+  lines(x_oi,y_oi,col="red")
+  lines(x_oi,y_oi_inv,col="red")
+}
+```
+
+
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 300),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 10),
+    sliderInput("alfa", "wybierz poziom istotności", min=0.001, max=0.1, value = 0.05),
+    plotOutput("ne"),
+    plotOutput("ni"),
+    plotOutput("el")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    y <- x + rnorm(1000)
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- B_D_E_test_1(x1, y1, input$value2)
+      bv = alfa_counter(input$alfa)
+      u1 = bv*sqrt(input$value1-input$value2)
+      a = (2*u1)/(input$value1-input$value2)
+      b = u1 -a*input$value2
+      
+      output$ne <- renderPlot({
+        plot(x1,y1)
+        points(x1[1:input$value2],y1[1:input$value2],col="blue")
+      })
+      output$ni <- renderPlot({
+        plot(seq(1,input$value1,length.out=input$value1),x1,type="l",ylim=c(-1,6))
+        points(seq(1,input$value1,length.out=input$value1),y1,col="blue",type="l")
+        points(seq(1,input$value2,length.out=input$value2),x1[1:input$value2],col="red",type="l")
+      })
+      
+      output$el <- renderPlot({
+        x_oi = seq(1,input$value1-input$value2, by=1)
+        y_oi = x_oi*a + b
+        y_oi_inv = -y_oi
+        plot(x_oi,res,type="l",ylim = c(-100,100))
+        lines(x_oi,y_oi,col="red")
+        lines(x_oi,y_oi_inv,col="red")
+      })
+    })
+} ,options = list(height = 1600)
+)
+```
+
+Teraz zobaczmy jak to jest dla danych zaburzonych pierowtnie przez biały szum tak jak poprzednio , ale dodatkowo kolejne obserwacje będą zakłócone ręcznie przez nas ( będzeimy dodawać na zmiene co 100 obserwacji 0,5 lub odejmowali 0,5)
+
+
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 300),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 10),
+    sliderInput("alfa", "wybierz poziom istotności", min=0.001, max=0.1, value = 0.05),
+    plotOutput("ne"),
+    plotOutput("ni"),
+    plotOutput("el")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    y <- x + rnorm(1000)
+    y[1:100] = y[1:100] -1
+    y[101:200] = y[101:200] + 1
+    y[201:300] = y[201:300] - 1
+    y[301:400] = y[301:400] + 1
+    y[401:500] = y[401:500] - 1
+    y[501:600] = y[501:600] + 1
+    y[601:700] = y[601:700] - 1
+    y[701:800] = y[701:800] + 1
+    y[801:900] = y[801:900] - 1
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- B_D_E_test_1(x1, y1, input$value2)
+      bv = alfa_counter(input$alfa)
+      u1 = bv*sqrt(input$value1-input$value2)
+      a = (2*u1)/(input$value1-input$value2)
+      b = u1 -a*input$value2
+      
+      output$ne <- renderPlot({
+        plot(x1,y1)
+        points(x1[1:input$value2],y1[1:input$value2],col="blue")
+      })
+      output$ni <- renderPlot({
+        plot(seq(1,input$value1,length.out=input$value1),x1,type="l",ylim=c(-1,6))
+        points(seq(1,input$value1,length.out=input$value1),y1,col="blue",type="l")
+        points(seq(1,input$value2,length.out=input$value2),x1[1:input$value2],col="red",type="l")
+      })
+      output$el <- renderPlot({
+        x_oi = seq(1,input$value1-input$value2, by=1)
+        y_oi = x_oi*a + b
+        y_oi_inv = -y_oi
+        plot(x_oi,res,type="l",ylim = c(-200,200))
+        lines(x_oi,y_oi,col="red")
+        lines(x_oi,y_oi_inv,col="red")
+      })
+    })
+} ,options = list(height = 1600)
+)
+```
+
+Zauważmy że mimo że dane wygląają na liniowe nie spełniają naszego testu. Jako ciekawostka w tym przypadku pokarzemy również działanie tych danych na danych pochodzących z funkcji kwadratowej
+
+
+
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 50),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 10),
+    sliderInput("alfa", "wybierz poziom istotności", min=0.001, max=0.1, value = 0.05),
+    plotOutput("ne"),
+    plotOutput("ni"),
+    plotOutput("el")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    y <- x^2 + rnorm(1000)
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- B_D_E_test_1(x1, y1, input$value2)
+      bv = alfa_counter(input$alfa)
+      u1 = bv*sqrt(input$value1-input$value2)
+      a = (2*u1)/(input$value1-input$value2)
+      b = u1 -a*input$value2
+      
+      output$ne <- renderPlot({
+        plot(x1,y1)
+        points(x1[1:input$value2],y1[1:input$value2],col="blue")
+      })
+      output$ni <- renderPlot({
+        plot(seq(1,input$value1,length.out=input$value1),x1,type="l",ylim=c(-1,30))
+        points(seq(1,input$value1,length.out=input$value1),y1,col="blue",type="l")
+        points(seq(1,input$value2,length.out=input$value2),x1[1:input$value2],col="red",type="l")
+      })
+      output$el <- renderPlot({
+        x_oi = seq(1,input$value1-input$value2, by=1)
+        y_oi = x_oi*a + b
+        y_oi_inv = -y_oi
+        plot(x_oi,res,type="l",ylim = c(-100,100))
+        lines(x_oi,y_oi,col="red")
+        lines(x_oi,y_oi_inv,col="red")
+      })
+    })
+} ,options = list(height = 1600)
+)
+
+
+```
+
+Spójrzmy jeszcze na przykład stworzony na danych rzeczywistych. Wykorzystamy baze EuSTockMarkets. Zawierają one informacje o kursach zamknięć różnych giedłd europejskich (DAX - Niemcy, SMI - Szwajcaria, CAC - Francja, FTSE - Wielka Brytania). Zobaczymy czy zależności są stałe.
+
+
+```{r,echo=FALSE, eval=TRUE}
+dt = as.data.frame(EuStockMarkets)
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value2", "Wybierz k:", min = 3, max = 800, value = 50),
+    sliderInput("alfa", "wybierz poziom istotności", min = 0.001, max = 0.1, value = 0.05),
+    selectInput("funkcja1", "Wybierz zmienną objaśnianą:", choices = colnames(dt)),
+    selectInput("funkcja2", "Wybierz zmienną objaśniającą:", choices = colnames(dt)),
+    plotOutput("ni"),
+    plotOutput("ne"),
+    plotOutput("el")
+  ),
+
+  server = function(input, output, session) {
+    observe({
+      x <- dt[[input$funkcja2]]
+      y <- dt[[input$funkcja1]]
+      
+      res <- B_D_E_test_1(x, y, input$value2)
+      bv = alfa_counter(input$alfa)
+      u1 = bv * sqrt(length(x) - input$value2)
+      a = (2 * u1) / (length(x) - input$value2)
+      b = u1 - a * input$value2
+      
+      output$ni <- renderPlot({
+        plot(x,y)
+        points(x[1:input$value2],y[1:input$value2],col="blue")
+      })
+      output$ne <- renderPlot({
+        plot(seq(1,1860,length.out=1860),x,type="l")
+        points(seq(1,1860,length.out=1860),y,type="l",col="blue")
+        points(seq(1,input$value2,length.out=input$value2),y[1:input$value2],col="red",type="l")
+      })
+      
+      output$el <- renderPlot({
+        x_oi = seq(1, length(x) - input$value2, by = 1)
+        y_oi = x_oi * a + b
+        y_oi_inv = -y_oi
+        plot(x_oi, res, type = "l", ylim = c(-600, 600))
+        lines(x_oi, y_oi, col = "red")
+        lines(x_oi, y_oi_inv, col = "red")
+      })
+    })
+  },
+  options = list(height = 1600)
+)
+```
+
+
+Drugi test to CUSUMSQ test opierający się na statystyce następującej postaci:
+\begin{displaymath}
+    \tilde{W_r} = \frac{\sum_{t=k+1}^r w_t^2} 
+    {\sum_{t=k+1}^T w_t^2}, \quad r = k+1, \dots, T
+\end{displaymath}
+Zakładając hipotezę zerową można udowodnić, że $E(\tilde{W_r}) = \frac{r-k}{T-k}$, czyli wartość oczekiwana przyjmuje wartości od $0$ dla $r=k$ do $1$ dla $r = T$. Hipoteza zerowa jest odrzucona w przypadku, gdy $\tilde{W_r}$ przekracza obszar ograniczony przez dwie proste równoległe do prostej wyznaczonej przez wartość oczekiwaną, jedna z nich jest poniżej, a druga powyżej tej prostej w odległości $c_0$. Odległość $c_0$ zależy zarówno od poziomu istotności $\alpha$, jak i od wielkości próbki ($T$).
+
+Testy CUSUM i CUSUMSQ nie są formalnymi testami statystycznymi o danym poziomie istotności, nie wylicza się wartości statystki testowej czy p-wartości. To jednak niekoniecznie musi być problemem, te testy dają szerszy wgląd poprzez wnioskowanie na podstawie wykresu, mogą dawać więcej informacji. Dodatkowym atutem jest ich ogólność w badaniu stabilności współczynników, nie trzeba posiadać wstępnej informacji o możliwym miejscu zmiany strukturalnej (por. test Chowa).
+
+### Test Harveya-Phillipsa
+
+Harvey i Phillips zaproponowali (w 1974 r.) wykorzystanie reszt rekursywnych do testowania hipotezy zerowej o homoskedastyczności reszt z modelu liniowego. Oto procedura testowa:
+
+  1. Poszereguj dane ze względu na zmienną objaśniającą $X_j$ i wybierz $k$ środkowych obserwacji, aby stworzyć bazowy model estymowany przez MNK. 
+    
+  2. Z pierwszych $m$ obserwacji (z utworzonego porządku) wyznacz wektor reszt rekursywnych $w_1$ korzystając z bazowego modelu z 1). Podobnie wyznacz wektor reszt rekursywnych $w_2$ z ostatnich $m$ obserwacji. Maksymalne $m$ to oczywiście $(T-k)/2$.
+    
+  3. Łatwo można pokazać, że zakładając hipotezę zerową:
+  
+        $F = \frac{w_2^{'} w_2} {w_1{'} w_1} \sim F_{m, m}$
+
+    
+  Wartości statystyki testowej powinny być bliskie $1$. Hipotezę zerową odrzucamy w przypadku osiągnięcia przez $F$ wartości mniejszej od kwantyla rzędu $\alpha/2$ z rozkładu $F_{m, m}$ lub przekroczeniu kwantyla rzędu $1-\alpha/2$ z rozkładu $F_{m, m}$.
+
+   Autorzy testu sugerują wybór liczby $m$ bliski liczbie $n/3$, wybierając również $k$, takie że $n>3k$. Ten test posiada dużą zaletę - można, bez powtarzania całej procedury, przeprowadzić test na homoskedastyczność względem dowolnej innej zmiennej objaśniającej $X_l$. Trzeba tylko poszeregować reszty rekursywne względem wartości $X_l$, pierwsze $m$ reszt przydzielić do $w_1$, drugie $m$ reszt przydzielić do $w_2$ i użyć statystyki testowej F. 
+   Zobaczmy przykład, ponownie dane będą zakłócone białym szumem.
+   
+```{r,echo=FALSE, eval=TRUE}
+H_P_test = function(x,y,j,k,m){
+  n = length(x[,j])
+  if(k*3 >= n){
+    z = n/3
+    if(z%%1==0){
+      k = z-1
+    }
+    else{
+      k = floor(k)
+    }
+  }
+  indeks_poczatkowy <- ceiling((n - k + 1) / 2)
+  x_1 = cbind(y,x)
+  sortinger = order(as.numeric(x_1[,j+1]))
+  ordered = x_1[sortinger,]
+  basic = ordered[indeks_poczatkowy:(indeks_poczatkowy + k - 1),-1]
+  basic_y =  as.data.frame(ordered[indeks_poczatkowy:(indeks_poczatkowy + k - 1),1])
+  onces = as.data.frame(rep(1, times = k))
+  basic_x = cbind(onces,basic)
+  beta_basic = solve(t(as.matrix(basic_x)) %*% as.matrix(basic_x)) %*% t(as.matrix(basic_x)) %*% as.matrix(basic_y)
+  if(m > (n-k)/2){
+    m = floor((n-k)/2)
+  }
+  first = 1:m
+  ip = n-m+1
+  last = ip:n
+  resi_first = c()
+  resi_last = c()
+  once = as.data.frame(rep(1,times=m))
+  lowe = ordered[first,-1]
+  uppe = ordered[last,-1]
+  lowe = cbind(once,lowe)
+  uppe = cbind(once,uppe)
+  lowe_y = ordered[first,1]
+  uppe_y = ordered[last,1] 
+  for ( kk in 1:length(first)){
+    resi_first[kk] = lowe_y[kk]-as.matrix(lowe[kk,]) %*% as.matrix(beta_basic)
+  }
+  for ( kk in 1:length(last)){
+    resi_last[kk] = uppe_y[kk]-as.matrix(uppe[kk,]) %*% as.matrix(beta_basic)
+  }
+  stat = t(as.matrix(resi_last)) %*% as.matrix(resi_last) / t(as.matrix(resi_first)) %*% as.matrix(resi_first)
+  stat_beta_dist = stat/(1+stat)
+  if(stat_beta_dist > (m-1)/(2*m-2)){
+    x = 0
+    y = (m-1)/(2*m-2)
+    difffer = 1
+    while (abs(difffer) > 0.00001){
+      z = x+(y-x)/2
+      x_wyn = pbeta(x,(m-1)/2,(m-1)/2) - pbeta(x,(m+1)/2,(m+1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      y_wyn = pbeta(y,(m-1)/2,(m-1)/2) - pbeta(y,(m+1)/2,(m+1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      z_wyn = pbeta(z,(m-1)/2,(m-1)/2) - pbeta(z,(m+1)/2,(m+1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      x_df = x_wyn 
+      y_df = y_wyn 
+      z_df = z_wyn 
+      if(x_df * z_df < 0){
+        y = z
+      } else {
+        x=z
+      }
+      difffer = z_df
+    }
+    p_val = 1-pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(z,(m-1)/2,(m-1)/2)
+  } else{
+    x = (m-1)/(2*m-2)
+    y = 1
+    difffer = 1
+    while (abs(difffer) > 0.00001){
+      z = x+(y-x)/2
+      x_wyn = pbeta(x,(m-1)/2,(m-1)/2) - pbeta(x,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      y_wyn = pbeta(y,(m-1)/2,(m-1)/2) - pbeta(y,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      z_wyn = pbeta(z,(m-1)/2,(m-1)/2) - pbeta(z,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      x_df = x_wyn 
+      y_df = y_wyn 
+      z_df = z_wyn 
+      if(x_df * z_df < 0){
+        y = z
+      } else {
+        x=z
+      }
+      difffer = z_df
+    }
+    p_val = pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + 1-pbeta(z,(m-1)/2,(m-1)/2)
+  }
+ return(p_val)
+}
+
+H_P_test_1 = function(x,y,k,m){
+  n = length(x)
+  if(k*3 >= n){
+    z = n/3
+    if(z%%1==0){
+      k = z-1
+    }
+    else{
+      k = floor(k)
+    }
+  }
+  indeks_poczatkowy <- ceiling((n - k + 1) / 2)
+  x_1 = cbind(y,x)
+  sortinger = order(as.numeric(x_1[,2]))
+  ordered = x_1[sortinger,]
+  basic = ordered[indeks_poczatkowy:(indeks_poczatkowy + k - 1),-1]
+  basic_y =  as.data.frame(ordered[indeks_poczatkowy:(indeks_poczatkowy + k - 1),1])
+  onces = as.data.frame(rep(1, times = k))
+  basic_x = cbind(onces,basic)
+  beta_basic = solve(t(as.matrix(basic_x)) %*% as.matrix(basic_x)) %*% t(as.matrix(basic_x)) %*% as.matrix(basic_y)
+  if(m > (n-k)/2){
+    m = floor((n-k)/2)
+  }
+  first = 1:m
+  ip = n-m+1
+  last = ip:n
+  resi_first = c()
+  resi_last = c()
+  once = as.data.frame(rep(1,times=m))
+  lowe = ordered[first,-1]
+  uppe = ordered[last,-1]
+  lowe = cbind(once,lowe)
+  uppe = cbind(once,uppe)
+  lowe_y = ordered[first,1]
+  uppe_y = ordered[last,1] 
+  for ( kk in 1:length(first)){
+    resi_first[kk] = lowe_y[kk]-as.matrix(lowe[kk,]) %*% as.matrix(beta_basic)
+  }
+  for ( kk in 1:length(last)){
+    resi_last[kk] = uppe_y[kk]-as.matrix(uppe[kk,]) %*% as.matrix(beta_basic)
+  }
+  stat = t(as.matrix(resi_last)) %*% as.matrix(resi_last) / t(as.matrix(resi_first)) %*% as.matrix(resi_first)
+  stat_beta_dist = stat/(1+stat)
+  if(stat_beta_dist > (m-1)/(2*m-2)){
+    x = 0
+    y = (m-1)/(2*m-2)
+    difffer = 1
+    while (abs(difffer) > 0.0001){
+      z = x+(y-x)/2
+      x_wyn = pbeta(x,(m-1)/2,(m-1)/2) - pbeta(x,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      y_wyn = pbeta(y,(m-1)/2,(m-1)/2) - pbeta(y,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      z_wyn = pbeta(z,(m-1)/2,(m-1)/2) - pbeta(z,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      x_df = x_wyn 
+      y_df = y_wyn 
+      z_df = z_wyn 
+      if(x_df * z_df < 0){
+        y = z
+      } else {
+        x=z
+      }
+      difffer = z_df
+    }
+    p_val = 1-pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(z,(m-1)/2,(m-1)/2)
+  } else{
+    x = (m-1)/(2*m-2)
+    y = 1
+    difffer = 1
+    while (abs(difffer) > 0.0001){
+      z = x+(y-x)/2
+      x_wyn = pbeta(x,(m-1)/2,(m-1)/2) - pbeta(x,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      y_wyn = pbeta(y,(m-1)/2,(m-1)/2) - pbeta(y,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      z_wyn = pbeta(z,(m-1)/2,(m-1)/2) - pbeta(z,(m+1)/2,(m-1)/2) - pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + pbeta(stat_beta_dist,(m+1)/2,(m-1)/2)
+      x_df = x_wyn 
+      y_df = y_wyn 
+      z_df = z_wyn 
+      if(x_df * z_df < 0){
+        y = z
+      } else {
+        x=z
+      }
+      difffer = z_df
+    }
+    p_val = pbeta(stat_beta_dist,(m-1)/2,(m-1)/2) + 1-pbeta(z,(m-1)/2,(m-1)/2)
+  }
+  return(p_val)
+}
+```
+  
+ 
+  
+   
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 60),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 330, value = 10),
+    sliderInput("value3", "Wybierz m", min=3, max=490, value = 20),
+    textOutput("el"),
+    plotOutput("lio")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    y <- x + rnorm(1000)
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- H_P_test_1(x1, y1, input$value2,input$value3)
+      lo = data.frame(x1,y1)
+      lo = lo[order(lo$x1),]
+      x1 = lo$x1
+      y1 = lo$y1
+      output$el <- renderText({
+        paste("p-wartość wynosi ", res)
+      })
+      output$lio <- renderPlot({
+        plot(x1,y1)
+        points(x1[ceiling((input$value1 - input$value2 + 1) / 2):(((input$value1 - input$value2 + 1) / 2) + input$value2 - 1)], y1[ceiling((input$value1 - input$value2 + 1) / 2):(((input$value1 - input$value2 + 1) / 2) + input$value2 - 1)], col = "red")
+        points(x1[1:input$value3], y1[1:input$value3], col = "blue")
+        points(x1[input$value1 - input$value3 +1:input$value1],y1[input$value1 - input$value3 +1:input$value1], col = "blue")
+      })
+    })
+},options = list(height = 800)
+)
+```   
+
+Zobaczymy co się stanie jeśli dane zakłócimy nie białym szumem lecz jakims paramterem zmiennym w czasie.
+
+
+
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 600),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 330, value = 150),
+    sliderInput("value3", "Wybierz m", min=3, max=300, value = 200),
+    textOutput("el"),
+    plotOutput("lio")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    x <- sort(x)
+    y <- x 
+    l = seq(1,100,length.out=1000)
+    for (i in 1:length(x)){
+      y[i] = y[i] + rnorm(1,0,l[i])
+    }
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- H_P_test_1(x1, y1, input$value2,input$value3)
+      lo = data.frame(x1,y1)
+      lo = lo[order(lo$x1),]
+      x1 = lo$x1
+      y1 = lo$y1
+      output$el <- renderText({
+        paste("p-wartość wynosi ", res)
+      })
+      output$lio <- renderPlot({
+        plot(x1,y1)
+        points(x1[ceiling((input$value1 - input$value2 + 1) / 2):(((input$value1 - input$value2 + 1) / 2) + input$value2 - 1)], y1[ceiling((input$value1 - input$value2 + 1) / 2):(((input$value1 - input$value2 + 1) / 2) + input$value2 - 1)], col = "red")
+        points(x1[1:input$value3], y1[1:input$value3], col = "blue")
+        points(x1[input$value1 - input$value3 +1:input$value1],y1[input$value1 - input$value3 +1:input$value1], col = "blue")
+      })
+    })
+},options = list(height = 800)
+)
+```   
+
+Widać, że test wychwytuje nawet taką zmiane. Sprawdźmy jeszcze jak działą na danych rzeczywistych.
+
+
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui <- fluidPage(
+  sliderInput("value2", "Wybierz k:", min = 2, max = 10, value = 3),
+  sliderInput("value3", "Wybierz m", min=3, max=15, value = 6),
+  selectInput("funkcja1", "Wybierz zmienną objaśnianą:", choices = names(mtcars[,c(1,3,4,5,7)])),
+  selectInput("funkcja2", "Wybierz zmienną objaśniającą:", choices = names(mtcars[,c(1,3,4,5,7)])),
+  textOutput("el"),
+  plotOutput("lio")
+),
+
+server <- function(input, output, session) {
+  observe({
+    x <- mtcars[[input$funkcja2]]
+    y <- mtcars[[input$funkcja1]]
+    
+    res <- H_P_test_1(x, y, input$value2, input$value3)
+    
+    lo <- data.frame(x, y)
+    lo <- lo[order(lo$x),]
+    x <- lo$x
+    y <- lo$y
+    
+    output$el <- renderText({
+      paste("p-wartość wynosi ", res)
+    })
+    
+    output$lio <- renderPlot({
+      plot(x, y)
+      points(x[ceiling((length(x) - input$value2 + 1) / 2):(((length(x) - input$value2 + 1) / 2) + input$value2 - 1)],
+             y[ceiling((length(y) - input$value2 + 1) / 2):(((length(y) - input$value2 + 1) / 2) + input$value2 - 1)], col = "red")
+      points(x[1:input$value3], y[1:input$value3], col = "blue")
+      points(x[(length(x) - input$value3 + 1):length(x)], y[(length(y) - input$value3 + 1):length(y)], col = "blue")
+    })
+  })
+},options = list(height = 800)
+)
+```   
+
+
+
+### Test Phillipsa-Harveya
+
+Phillips i Harvey zaproponowali (w 1974 r.) wykorzystanie reszt rekursywnych do weryfikowania hipotezy zerowej o braku autokorelacji pierwszego rzędu w szeregu czasowym. Wykorzystali do tego zmodyfikowaną proporcję von Neumana postaci:
+        $$MVNR = \frac{\sum_{t=k+2}^T (w_t-w_{t-1})^2 / (T-k-1)}{\sum_{t=k+1}^T w_t^2 / (T-k)}$$
+
+  Jest to bardzo podobna statystyka testowa do statystyki Durbina-Watsona, główną różnicę stanowi wzięcie pod uwagę reszt rekursywnych, a nie wyznaczonych przez MNK na podstawie wszystkich obserwacji. Normalność reszt rekursywnych powoduje, że w teście nie występują obszary, w których statystyka testowa nie daje werdyktu. 
+```{r,echo=FALSE, eval=TRUE}
+P_H_test = function(x,y,t){
+  n = length(x[,1])
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t,]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j,])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j,]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j,])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1,]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))/sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i,]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i,]))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i,])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  t_1  =t+1
+  t_2 = t+2
+  squared_resid = sum((residuals_list[t_1:n])^2)/(n-t)
+  dif = c()
+  for(i in 1:n-t_2){
+    dif[i] = ((residuals_list[i+t_2-1] - residuals_list[i+t_2-2])^2)/(n-t-1)
+  }
+  dif_sum = sum(dif)
+  stat = dif_sum/squared_resid
+  p_val = 0
+  if(stat>2){
+    p_val = 2*(1-pnorm(stat,2,4/(n-t)))  
+  }
+  else {
+    p_val = 2*pnorm(stat,2,4/(n-t))
+  }
+  return(p_val)
+}
+
+
+P_H_test_1 = function(x,y,t){
+  n = length(x)
+  jfk = cbind(rep(1, times = n),as.matrix(x))
+  solve(t(jfk) %*% jfk)  %*% t(jfk) %*% as.matrix(y)
+  residuals_list = rep(0,times=n)
+  res = rep(0,times=n)
+  small_matrix_mini = cbind(rep(1, times = t),as.matrix(x[1:t]))
+  coefff_mini = solve(t(small_matrix_mini) %*% small_matrix_mini)  %*% t(small_matrix_mini) %*% as.matrix(y[1:t])
+  for(j in 1:t){
+    residuals_list[j]  = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))/sqrt(1+cbind(rep(1, times = 1),as.matrix(x[j])) %*% solve(t(small_matrix_mini) %*% small_matrix_mini) %*% t(cbind(rep(1, times = 1),as.matrix(x[j]))))
+    res[j] = (as.matrix(y[j]) - cbind(rep(1, times = 1),as.matrix(x[j])) %*% (coefff_mini))
+  }
+  for (i in t+1:n) {
+    small_matrix = cbind(rep(1, times = i-1),as.matrix(x[1:i-1]))
+    coefff = solve(t(small_matrix) %*% small_matrix)  %*% t(small_matrix) %*% as.matrix(y[1:i-1])
+    residuals_list[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))/(sqrt(1+(cbind(rep(1, times =1),as.matrix(x[i]))) %*% solve(t(small_matrix) %*% small_matrix) %*% t(cbind(rep(1, times =1),as.matrix(x[i])))))
+    res[i] = (as.matrix(y[i]) - cbind(rep(1, times =1),as.matrix(x[i])) %*% (coefff))
+    if(i == n){
+      break
+    }
+  }
+  t_1  =t+1
+  t_2 = t+2
+  squared_resid = sum((residuals_list[t_1:n])^2)/(n-t)
+  dif = c()
+  for(i in 1:n-t_2+1){
+    dif[i] = ((residuals_list[i+t_2-1] - residuals_list[i+t_2-2])^2)/(n-t-1)
+  }
+  dif_sum = sum(dif)
+  stat = dif_sum/squared_resid
+  p_val = 0
+  if(stat>2){
+    p_val = 2*(1-pnorm(stat,2,4/sqrt(n-t)))  
+  }
+  else {
+    p_val = 2*pnorm(stat,2,4/sqrt(n-t))
+  }
+  return(p_val)
+}
+```
+    
+    
+  Nie znaleźliśmy tablic z krytycznymi wartościami statystyki testowej dla danych poziomów istotności i liczb obserwacji. Dla dużej liczby obserwacji sugeruje się użycie rozkładu normalnego o wartości oczekiwanej równej $2$ i wariancji $4/(T-k)$ do przybliżenia rozkładu statystyki testowej MVNR przy założeniu hipotezy zerowej. W takim przypadku odrzucamy hipotezę zerową w przypadku osiągnięcia przez $MVNR$ wartości mniejszej od kwantyla rzędu $\alpha/2$ z rozkładu $\mathcal{N} (2, \,4/(T-k))$ lub przekroczeniu kwantyla rzędu $1-\alpha/2$ z rozkładu $\mathcal{N} (2, \,4/(T-k))$.
+
+Zobaczmy prosty przykład.
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 500),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 10),
+    textOutput("el"),
+    plotOutput("lio"),
+    plotOutput("ni")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    y <- x + rnorm(1000)
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- P_H_test_1(x1, y1, input$value2)
+      output$el <- renderText({
+        paste("p-wartość wynosi ", res)
+      })
+      output$lio <- renderPlot({
+        plot(x1,y1)
+
+        points(x1[1:input$value2],y1[1:input$value2], col = "blue")
+      })
+      output$ni <- renderPlot({
+        plot(seq(1,input$value1,length.out=input$value1),x1,type="l",ylim=c(-1,6))
+        points(seq(1,input$value1,length.out=input$value1),y1,col="blue",type="l")
+        points(seq(1,input$value2,length.out=input$value2),x1[1:input$value2],col="red",type="l")
+      })
+    })
+},options = list(height = 1200)
+)
+```   
+
+Teraz zobaczmy jak to jest dla danych zaburzonych pierowtnie przez biały szum tak jak poprzednio , ale dodatkowo kolejne obserwacje będą zakłócone ręcznie przez nas ( będzeimy dodawać na zmiene co 100 obserwacji 0,5 lub odejmowali 0,5)
+
+
+```{r,echo=FALSE, eval=TRUE}
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value1", "Wybierz ilość obserwacji w próbie:", min = 10, max = 1000, value = 500),
+    sliderInput("value2", "Wybierz k:", min = 2, max = 100, value = 10),
+    textOutput("el"),
+    plotOutput("lio"),
+    plotOutput("ni")
+  ),
+
+server = function(input, output, session) {
+    x <- runif(1000,0,5)
+    y <- x + rnorm(1000)
+    y[1:100] = y[1:100] -1
+    y[101:200] = y[101:200] + 1
+    y[201:300] = y[201:300] - 1
+    y[301:400] = y[301:400] + 1
+    y[401:500] = y[401:500] - 1
+    y[501:600] = y[501:600] + 1
+    y[601:700] = y[601:700] - 1
+    y[701:800] = y[701:800] + 1
+    y[801:900] = y[801:900] - 1
+    observe({
+      x1 = x[1:input$value1]
+      y1 = y[1:input$value1]
+      res <- P_H_test_1(x, y, input$value2)
+      output$el <- renderText({
+        paste("p-wartość wynosi ", res)
+      })
+      output$lio <- renderPlot({
+        plot(x1,y1)
+
+        points(x1[1:input$value2],y1[1:input$value2], col = "blue")
+      })
+      output$ni <- renderPlot({
+        plot(seq(1,input$value1,length.out=input$value1),x1,type="l",ylim=c(-1,6))
+        points(seq(1,input$value1,length.out=input$value1),y1,col="blue",type="l")
+        points(seq(1,input$value2,length.out=input$value2),x1[1:input$value2],col="red",type="l")
+      })
+    })
+},options = list(height = 1200)
+)
+```   
+
+Na koniec spójrzmy na dane rzeczywiste
+
+```{r,echo=FALSE, eval=TRUE}
+dt = as.data.frame(EuStockMarkets)
+shinyApp(
+  ui = fluidPage(
+    sliderInput("value2", "Wybierz k:", min = 3, max = 800, value = 50),
+    selectInput("funkcja1", "Wybierz zmienną objaśnianą:", choices = colnames(dt)),
+    selectInput("funkcja2", "Wybierz zmienną objaśniającą:", choices = colnames(dt)),
+    textOutput("lio"),
+    plotOutput("ne"),
+    plotOutput("ni")
+  ),
+
+server = function(input, output, session) {
+    observe({
+      x <- dt[[input$funkcja2]]
+      y <- dt[[input$funkcja1]]
+      res <- P_H_test_1(x, y, input$value2)
+      output$lio <- renderText({
+        paste("p-wartość wynosi ", res)
+      })
+      output$ne <- renderPlot({
+        plot(x,y)
+        points(x[1:input$value2],y[1:input$value2],col="blue")
+      })
+      output$ni <- renderPlot({
+        plot(seq(1,1860,length.out=1860),x,ylim = c(0,6000))
+        points(seq(1,1860,length.out=1860),y,col="blue")
+        points(seq(1,input$value2,length.out=input$value2),y[1:input$value2], col = "red")
+      })
+    })
+},options = list(height = 1200)
+)
+```   
+
